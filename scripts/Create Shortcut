@@ -1,0 +1,60 @@
+#!/usr/bin/env bash
+
+SCRIPT_NAME="Create Shortcut"
+created=0
+
+notify() {
+  if command -v notify-send >/dev/null 2>&1; then
+    notify-send "$SCRIPT_NAME" "$1"
+  fi
+}
+
+die() {
+  notify "$1"
+  printf '%s: %s\n' "$SCRIPT_NAME" "$1" >&2
+  exit 1
+}
+
+resolve_path() {
+  if command -v realpath >/dev/null 2>&1; then
+    realpath -- "$1"
+  else
+    readlink -f -- "$1"
+  fi
+}
+
+make_link_name() {
+  local source_path="$1"
+  local parent_dir base_name link_path n
+
+  parent_dir="$(dirname -- "$source_path")"
+  base_name="$(basename -- "$source_path")"
+  link_path="${parent_dir}/${base_name} shortcut"
+  n=2
+
+  while [ -e "$link_path" ] || [ -L "$link_path" ]; do
+    link_path="${parent_dir}/${base_name} shortcut ${n}"
+    n=$((n + 1))
+  done
+
+  printf '%s\n' "$link_path"
+}
+
+paths="$(printf '%s\n' "${NAUTILUS_SCRIPT_SELECTED_FILE_PATHS:-}" | sed '/^$/d')"
+[ -n "$paths" ] || die "No file or folder selected"
+
+while IFS= read -r path; do
+  [ -n "$path" ] || continue
+
+  abs_path="$(resolve_path "$path")" || continue
+  link_path="$(make_link_name "$abs_path")"
+
+  if ln -s -- "$abs_path" "$link_path"; then
+    created=$((created + 1))
+  fi
+done <<EOF
+$paths
+EOF
+
+[ "$created" -gt 0 ] || die "Could not create any shortcuts"
+notify "Created ${created} shortcut(s)"

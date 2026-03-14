@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+
+SCRIPT_NAME="Make Executable"
+changed=0
+
+notify() {
+  if command -v notify-send >/dev/null 2>&1; then
+    notify-send "$SCRIPT_NAME" "$1"
+  fi
+}
+
+die() {
+  notify "$1"
+  printf '%s: %s\n' "$SCRIPT_NAME" "$1" >&2
+  exit 1
+}
+
+paths="$(printf '%s\n' "${NAUTILUS_SCRIPT_SELECTED_FILE_PATHS:-}" | sed '/^$/d')"
+[ -n "$paths" ] || die "No file selected"
+
+while IFS= read -r path; do
+  [ -n "$path" ] || continue
+  [ -f "$path" ] || continue
+
+  if chmod +x -- "$path"; then
+    changed=$((changed + 1))
+  fi
+done <<EOF
+$paths
+EOF
+
+[ "$changed" -gt 0 ] || die "No regular files were updated"
+notify "Marked ${changed} file(s) as executable"

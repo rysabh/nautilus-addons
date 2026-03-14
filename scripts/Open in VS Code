@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+
+SCRIPT_NAME="Open in VS Code"
+
+notify() {
+  if command -v notify-send >/dev/null 2>&1; then
+    notify-send "$SCRIPT_NAME" "$1"
+  fi
+}
+
+die() {
+  notify "$1"
+  printf '%s: %s\n' "$SCRIPT_NAME" "$1" >&2
+  exit 1
+}
+
+find_code() {
+  local candidate
+
+  for candidate in \
+    code \
+    code-insiders \
+    codium \
+    /snap/bin/code \
+    /snap/bin/code-insiders \
+    /usr/bin/code
+  do
+    if command -v "$candidate" >/dev/null 2>&1; then
+      command -v "$candidate"
+      return 0
+    fi
+
+    if [ -x "$candidate" ]; then
+      printf '%s\n' "$candidate"
+      return 0
+    fi
+  done
+
+  return 1
+}
+
+mapfile -t paths < <(printf '%s\n' "${NAUTILUS_SCRIPT_SELECTED_FILE_PATHS:-}" | sed '/^$/d')
+[ "${#paths[@]}" -gt 0 ] || die "No file or folder selected"
+
+code_cmd="$(find_code)" || die "VS Code command not found"
+"$code_cmd" "${paths[@]}" >/dev/null 2>&1 &

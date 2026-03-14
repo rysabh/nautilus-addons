@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+
+SCRIPT_NAME="Copy Path"
+
+notify() {
+  if command -v notify-send >/dev/null 2>&1; then
+    notify-send "$SCRIPT_NAME" "$1"
+  fi
+}
+
+die() {
+  notify "$1"
+  printf '%s: %s\n' "$SCRIPT_NAME" "$1" >&2
+  exit 1
+}
+
+copy_to_clipboard() {
+  if command -v xclip >/dev/null 2>&1 && xclip -selection clipboard; then
+    return 0
+  fi
+
+  if command -v xsel >/dev/null 2>&1 && xsel --clipboard --input; then
+    return 0
+  fi
+
+  if command -v wl-copy >/dev/null 2>&1 && wl-copy; then
+    return 0
+  fi
+
+  return 1
+}
+
+paths="$(printf '%s\n' "${NAUTILUS_SCRIPT_SELECTED_FILE_PATHS:-}" | sed '/^$/d')"
+[ -n "$paths" ] || die "No file or folder selected"
+
+if ! printf '%s' "$paths" | copy_to_clipboard; then
+  die "Clipboard copy failed. Install or fix xclip, xsel, or wl-copy."
+fi
+
+notify "Copied full path(s)"

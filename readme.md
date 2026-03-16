@@ -2,7 +2,7 @@
 
 ## symlink new scripts folder
 ```bash
-SCRIPTS_PATH="${HOME}/Applications/Nautilus/scripts"
+SCRIPTS_PATH="${HOME}/Applications/nautilus-addons/scripts"
 
 mkdir -p "${SCRIPTS_PATH}"
 
@@ -20,7 +20,7 @@ nautilus -q
 
 ## initialize templates
 ```bash
-TEMPLATES_PATH="${HOME}/Applications/Nautilus/Templates"
+TEMPLATES_PATH="${HOME}/Applications/nautilus-addons/Templates"
 
 mkdir -p "${TEMPLATES_PATH}"
 

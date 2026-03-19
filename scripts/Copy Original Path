@@ -1,0 +1,61 @@
+#!/usr/bin/env bash
+
+SCRIPT_NAME="Copy Original Path"
+
+notify() {
+  if command -v notify-send >/dev/null 2>&1; then
+    notify-send "$SCRIPT_NAME" "$1"
+  fi
+}
+
+die() {
+  notify "$1"
+  printf '%s: %s\n' "$SCRIPT_NAME" "$1" >&2
+  exit 1
+}
+
+copy_to_clipboard() {
+  if command -v xclip >/dev/null 2>&1 && xclip -selection clipboard; then
+    return 0
+  fi
+
+  if command -v xsel >/dev/null 2>&1 && xsel --clipboard --input; then
+    return 0
+  fi
+
+  if command -v wl-copy >/dev/null 2>&1 && wl-copy; then
+    return 0
+  fi
+
+  return 1
+}
+
+resolve_target_path() {
+  if command -v realpath >/dev/null 2>&1; then
+    realpath -- "$1"
+  else
+    readlink -f -- "$1"
+  fi
+}
+
+paths="$(printf '%s\n' "${NAUTILUS_SCRIPT_SELECTED_FILE_PATHS:-}" | sed '/^$/d')"
+[ -n "$paths" ] || die "No file or folder selected"
+
+resolved_paths="$(
+  while IFS= read -r path; do
+    [ -n "$path" ] || continue
+    [ -L "$path" ] || continue
+
+    resolve_target_path "$path" || continue
+  done <<EOF
+$paths
+EOF
+)"
+
+[ -n "$resolved_paths" ] || die "No shortcut files or folders selected"
+
+if ! printf '%s' "$resolved_paths" | copy_to_clipboard; then
+  die "Clipboard copy failed. Install or fix xclip, xsel, or wl-copy."
+fi
+
+notify "Copied original path(s)"

@@ -30,7 +30,7 @@ copy_to_clipboard() {
   return 1
 }
 
-resolve_target_path() {
+canonicalize_path() {
   if command -v realpath >/dev/null 2>&1; then
     realpath -- "$1"
   else
@@ -38,17 +38,66 @@ resolve_target_path() {
   fi
 }
 
-paths="$(printf '%s\n' "${NAUTILUS_SCRIPT_SELECTED_FILE_PATHS:-}" | sed '/^$/d')"
-[ -n "$paths" ] || die "No file or folder selected"
+selected_items() {
+  # Nautilus may provide selected items either as local paths or as file:// URIs.
+  if [ -n "${NAUTILUS_SCRIPT_SELECTED_FILE_PATHS:-}" ]; then
+    printf '%s\n' "$NAUTILUS_SCRIPT_SELECTED_FILE_PATHS"
+    return 0
+  fi
+
+  if [ -n "${NAUTILUS_SCRIPT_SELECTED_URIS:-}" ]; then
+    printf '%s\n' "$NAUTILUS_SCRIPT_SELECTED_URIS"
+    return 0
+  fi
+
+  return 1
+}
+
+gio_attr() {
+  local item="$1"
+  local attr="$2"
+
+  gio info -a "$attr" -- "$item" 2>/dev/null | sed -n "s/^  ${attr}: //p" | head -n 1
+}
+
+gio_local_path() {
+  gio info -- "$1" 2>/dev/null | sed -n 's/^local path: //p' | head -n 1
+}
+
+resolve_target_path() {
+  local item="$1"
+  local target_path local_path
+
+  if [ -L "$item" ]; then
+    canonicalize_path "$item"
+    return 0
+  fi
+
+  # gio understands both regular paths and file:// URIs, so it is safer than
+  # relying only on shell path tests when Nautilus invokes the script.
+  target_path="$(gio_attr "$item" "standard::symlink-target")"
+  [ -n "$target_path" ] || return 1
+
+  if [[ "$target_path" = /* ]]; then
+    canonicalize_path "$target_path"
+    return 0
+  fi
+
+  local_path="$(gio_local_path "$item")"
+  [ -n "$local_path" ] || return 1
+  canonicalize_path "$(dirname -- "$local_path")/$target_path"
+}
+
+items="$(selected_items | sed '/^$/d')"
+[ -n "$items" ] || die "No file or folder selected"
 
 resolved_paths="$(
-  while IFS= read -r path; do
-    [ -n "$path" ] || continue
-    [ -L "$path" ] || continue
+  while IFS= read -r item; do
+    [ -n "$item" ] || continue
 
-    resolve_target_path "$path" || continue
+    resolve_target_path "$item" || continue
   done <<EOF
-$paths
+$items
 EOF
 )"
 

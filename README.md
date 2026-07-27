@@ -5,6 +5,10 @@
 REPO_PATH="${HOME}/Applications/nautilus-addons"
 SCRIPTS_PATH="${REPO_PATH}/scripts"
 
+### Make all scripts executable
+find ./scripts -type f -exec chmod +x {} +
+
+### create folders
 mkdir -p "${SCRIPTS_PATH}"
 mkdir -p "${HOME}/.local/share/nautilus"
 

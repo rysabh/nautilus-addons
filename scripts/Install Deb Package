@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+
+SCRIPT_NAME="Install Deb Package"
+
+notify() {
+  if command -v notify-send >/dev/null 2>&1; then
+    notify-send "$SCRIPT_NAME" "$1"
+  fi
+}
+
+die() {
+  notify "$1"
+  printf '%s: %s\n' "$SCRIPT_NAME" "$1" >&2
+  exit 1
+}
+
+mapfile -t debs < <(printf '%s\n' "${NAUTILUS_SCRIPT_SELECTED_FILE_PATHS:-}" | grep -i '\.deb$')
+[ "${#debs[@]}" -gt 0 ] || die "No .deb file selected"
+
+if ! command -v gnome-terminal >/dev/null 2>&1; then
+  die "gnome-terminal is required to run the install"
+fi
+
+# Nautilus started from a terminal inherits that terminal's screen id, which
+# breaks gnome-terminal once that terminal is closed.
+unset GNOME_TERMINAL_SCREEN
+
+# The .deb paths are passed as "$@" so names with spaces need no escaping.
+# The final read keeps the window open to show apt's result.
+gnome-terminal -- bash -c 'sudo apt install -- "$@"; read -rp "Press Enter to close..."' _ "${debs[@]}" >/dev/null 2>&1 &

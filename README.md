@@ -36,6 +36,27 @@ ln -s "${TEMPLATES_PATH}" "${HOME}/Templates"
 
 nautilus -q
 ```
+---
+
+## initialize extensions
+```bash
+EXTENSIONS_PATH="${REPO_PATH}/extensions"
+
+### Make the extension's script executable
+chmod +x "${EXTENSIONS_PATH}/Install Deb Package"
+
+### create folders
+mkdir -p "${EXTENSIONS_PATH}"
+mkdir -p "${HOME}/.local/share/nautilus-python"
+
+# remove old extensions folder or symlink
+rm -rf -- "${HOME}/.local/share/nautilus-python/extensions"
+
+# symlink new extensions folder
+ln -s "${EXTENSIONS_PATH}" "${HOME}/.local/share/nautilus-python/extensions"
+
+nautilus -q
+```
 
 # Nautilus Add-on Scripts
 
@@ -62,4 +83,4 @@ Notes:
 - `xclip` is for `Copy Path`
 - `code` is for `Open in VS Code`
 - `sublime-text` is only for `Open in Sublime Text`
-- `python3-nautilus` is for Nautilus Python extensions
+- `python3-nautilus` is for `Install Deb Package`, which shows only on `.deb` files

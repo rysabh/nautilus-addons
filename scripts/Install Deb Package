@@ -27,4 +27,4 @@ unset GNOME_TERMINAL_SCREEN
 
 # The .deb paths are passed as "$@" so names with spaces need no escaping.
 # The final read keeps the window open to show apt's result.
-gnome-terminal -- bash -c 'sudo apt install -- "$@"; read -rp "Press Enter to close..."' _ "${debs[@]}" >/dev/null 2>&1 &
+gnome-terminal -- bash -c 'printf "$ sudo apt install -- %s\n" "$*"; sudo apt install -- "$@"; read -rp "Press Enter to close..."' _ "${debs[@]}" >/dev/null 2>&1 &

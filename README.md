@@ -47,7 +47,7 @@ Ubuntu/Debian:
 
 ```bash
 sudo apt update
-sudo apt install nautilus zenity libnotify-bin xclip
+sudo apt install nautilus zenity libnotify-bin xclip python3-nautilus
 ```
 
 Optional:
@@ -62,3 +62,4 @@ Notes:
 - `xclip` is for `Copy Path`
 - `code` is for `Open in VS Code`
 - `sublime-text` is only for `Open in Sublime Text`
+- `python3-nautilus` is for Nautilus Python extensions

@@ -1,25 +1,14 @@
 #!/usr/bin/env bash
 
 SCRIPT_NAME="Create New File"
-
-notify() {
-  if command -v notify-send >/dev/null 2>&1; then
-    notify-send "$SCRIPT_NAME" "$1"
-  fi
-}
-
-die() {
-  notify "$1"
-  printf '%s: %s\n' "$SCRIPT_NAME" "$1" >&2
-  exit 1
-}
+source "$(dirname -- "$(realpath -- "$0")")/../lib/common.sh" || exit 1
 
 if ! command -v zenity >/dev/null 2>&1; then
   die "zenity is required to prompt for the new file name"
 fi
 
 # Use the first selected item. Nautilus scripts only appear for selections.
-selected_path="$(printf '%s\n' "${NAUTILUS_SCRIPT_SELECTED_FILE_PATHS:-}" | sed -n '/./{p;q;}')"
+selected_path="$(selected_paths | head -n 1)"
 [ -n "$selected_path" ] || die "Select a file or folder first"
 
 # If selection is a file, create inside its parent folder.

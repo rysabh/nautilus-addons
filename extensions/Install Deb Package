@@ -1,20 +1,9 @@
 #!/usr/bin/env bash
 
 SCRIPT_NAME="Install Deb Package"
+source "$(dirname -- "$(realpath -- "$0")")/../lib/common.sh" || exit 1
 
-notify() {
-  if command -v notify-send >/dev/null 2>&1; then
-    notify-send "$SCRIPT_NAME" "$1"
-  fi
-}
-
-die() {
-  notify "$1"
-  printf '%s: %s\n' "$SCRIPT_NAME" "$1" >&2
-  exit 1
-}
-
-mapfile -t debs < <(printf '%s\n' "${NAUTILUS_SCRIPT_SELECTED_FILE_PATHS:-}" | grep -i '\.deb$')
+mapfile -t debs < <(selected_paths | grep -i '\.deb$')
 [ "${#debs[@]}" -gt 0 ] || die "No .deb file selected"
 
 if ! command -v gnome-terminal >/dev/null 2>&1; then

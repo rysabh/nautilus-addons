@@ -1,27 +1,8 @@
 #!/usr/bin/env bash
 
 SCRIPT_NAME="Create Shortcut"
+source "$(dirname -- "$(realpath -- "$0")")/../lib/common.sh" || exit 1
 created=0
-
-notify() {
-  if command -v notify-send >/dev/null 2>&1; then
-    notify-send "$SCRIPT_NAME" "$1"
-  fi
-}
-
-die() {
-  notify "$1"
-  printf '%s: %s\n' "$SCRIPT_NAME" "$1" >&2
-  exit 1
-}
-
-resolve_path() {
-  if command -v realpath >/dev/null 2>&1; then
-    realpath -- "$1"
-  else
-    readlink -f -- "$1"
-  fi
-}
 
 make_link_name() {
   local source_path="$1"
@@ -40,13 +21,13 @@ make_link_name() {
   printf '%s\n' "$link_path"
 }
 
-paths="$(printf '%s\n' "${NAUTILUS_SCRIPT_SELECTED_FILE_PATHS:-}" | sed '/^$/d')"
+paths="$(selected_paths)"
 [ -n "$paths" ] || die "No file or folder selected"
 
 while IFS= read -r path; do
   [ -n "$path" ] || continue
 
-  abs_path="$(resolve_path "$path")" || continue
+  abs_path="$(realpath -- "$path")" || continue
   link_path="$(make_link_name "$abs_path")"
 
   if ln -s -- "$abs_path" "$link_path"; then

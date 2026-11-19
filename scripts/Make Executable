@@ -1,21 +1,10 @@
 #!/usr/bin/env bash
 
 SCRIPT_NAME="Make Executable"
+source "$(dirname -- "$(realpath -- "$0")")/../lib/common.sh" || exit 1
 changed=0
 
-notify() {
-  if command -v notify-send >/dev/null 2>&1; then
-    notify-send "$SCRIPT_NAME" "$1"
-  fi
-}
-
-die() {
-  notify "$1"
-  printf '%s: %s\n' "$SCRIPT_NAME" "$1" >&2
-  exit 1
-}
-
-paths="$(printf '%s\n' "${NAUTILUS_SCRIPT_SELECTED_FILE_PATHS:-}" | sed '/^$/d')"
+paths="$(selected_paths)"
 [ -n "$paths" ] || die "No file selected"
 
 while IFS= read -r path; do

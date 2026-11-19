@@ -1,42 +1,7 @@
 #!/usr/bin/env bash
 
 SCRIPT_NAME="Copy Original Path"
-
-notify() {
-  if command -v notify-send >/dev/null 2>&1; then
-    notify-send "$SCRIPT_NAME" "$1"
-  fi
-}
-
-die() {
-  notify "$1"
-  printf '%s: %s\n' "$SCRIPT_NAME" "$1" >&2
-  exit 1
-}
-
-copy_to_clipboard() {
-  if command -v xclip >/dev/null 2>&1 && xclip -selection clipboard; then
-    return 0
-  fi
-
-  if command -v xsel >/dev/null 2>&1 && xsel --clipboard --input; then
-    return 0
-  fi
-
-  if command -v wl-copy >/dev/null 2>&1 && wl-copy; then
-    return 0
-  fi
-
-  return 1
-}
-
-canonicalize_path() {
-  if command -v realpath >/dev/null 2>&1; then
-    realpath -- "$1"
-  else
-    readlink -f -- "$1"
-  fi
-}
+source "$(dirname -- "$(realpath -- "$0")")/../lib/common.sh" || exit 1
 
 selected_items() {
   # Nautilus may provide selected items either as local paths or as file:// URIs.
@@ -69,7 +34,7 @@ resolve_target_path() {
   local target_path local_path
 
   if [ -L "$item" ]; then
-    canonicalize_path "$item"
+    realpath -- "$item"
     return 0
   fi
 
@@ -79,13 +44,13 @@ resolve_target_path() {
   [ -n "$target_path" ] || return 1
 
   if [[ "$target_path" = /* ]]; then
-    canonicalize_path "$target_path"
+    realpath -- "$target_path"
     return 0
   fi
 
   local_path="$(gio_local_path "$item")"
   [ -n "$local_path" ] || return 1
-  canonicalize_path "$(dirname -- "$local_path")/$target_path"
+  realpath -- "$(dirname -- "$local_path")/$target_path"
 }
 
 items="$(selected_items | sed '/^$/d')"
